@@ -1,0 +1,39 @@
+=======
+Periods
+=======
+
+Periods are a handy way to access a duration with given start and end. They can be used as a convenient generator for occurrences of many events.
+
+.. py:class:: Period (events, start, end [, persisted_occurrences=None [, tzinfo=utc [, occurrence_pool=None]]])
+The constructor requires a list of *events* and a given *start* and *end*.
+If occurrences were already queried or the pool of available occurrences should be limited, the keyword-argument *occurrence_pool* an be specified.
+*persisted_occurrences* on the other hand is supposed to handle occurrences already saved within the database.
+
+    .. py.attribute:: has_occurrences
+    property-method, returns weather any occurrences happen within given interval.
+
+	.. py:attribute:: occurrences
+	property-method, returns occurrences that end after the given start and start before the given end.
+
+	.. py:method:: get_persisted_occurrences ()
+	returns all occurrences saved within the database (or passed as *persisted_occurrences* argument, which should exist in the databse anyway).
+
+	.. py:method:: classify_occurrence (occurrence)
+	returns a dict with entries *occurrence*, *class* and *cancelled*. If setting *SHOW_CANCELLED* is false, *cancelled* will always be true, since this function will otherwise return None.
+	Classes are:
+	    0 occurrence only started within period
+	    1 occurrence started and ended within period
+	    2 occurrence did not happen during period
+	    3 occurrence only ended within period
+
+	.. py:method:: get_time_slot (start, end)
+	returns a sub-period. Won't return a timeslot greater then the period specified.
+
+.. py:class:: TimeRange (events [, date=None [, persisted_occurrences=None [, tzinfo=timezone.utc [, occurrence_pool=None]]]])
+Subclass of :py:class:`Period`, enables easier navigation by implementing __next__() and __prev__() methods.
+
+	.. py:method:: derive_sub_period (cls [, start=None, [tzinfo=None]])
+	returns a single period of type *cls*, starting at *start* or start of original period.  *cls* should be a subclass of :py:class:`TimeRange` or at least :py:class:`Period`, but essentially only requires a class with a constructor equal to that of TimeRange.
+
+	.. py:method:: get_periods(cls [, tzinfo=None])
+	returns a generator that iterates through all periods found within the given period. Calls :py:func:`derive_sub_period` iteratively, so restrictions to *cls* apply equally here.

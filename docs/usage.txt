@@ -1,0 +1,11 @@
+=====
+Usage
+=====
+
+The idea behind this django-app is to define an :py:class:`Event`-subclass to behave as required and supply the necessarry fields. The only (relevant) fields supplied by :py:class:`Event` are *start* and *end*. There are furthermore two fields to handle recurrences: *rule* and *end_recurring_period*. Once they are set, the :py:class:`Event`-object can handle it's own recurrences.
+(Currently there is no infrastructure or tests to correctly handle a change in recurrsion. Use with caution!)
+
+To implement :py:class:`Occurrence` s of :py:class:`Event` s, it is currently necessarry to rebase all subclasses of :py:class:`Event` and substitute :py:class:`Event` for :py:class:`Occurrence`.
+THIS IS HIGHLY EXPERIMENTAL AND WILL CHANGE IN THE NEAR FUTURE!
+It is not recommended to subclass :py:class:`Occurrence`.
+Rebasing happens during initialisation, therefore you should mention all apps which use subclasses of :py:class:`Event` in your settings.INSTALLED_APPS before you mention essential-scheduler.

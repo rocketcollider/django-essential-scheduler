@@ -1,0 +1,63 @@
+======
+Models
+======
+
+
+===================
+Theory of operation
+===================
+
+This app understands two slightly different types of events: Recurring and Singular events.
+A Recurring event is an event that has a recurrence-rule associated with itself. A Singular event therfore has no recurrence-rule.
+While Singular events are straight forward, an event has exactly one instance within the database, Recurring events are more complex:
+ * They have a recurrence-rule, saved in a different table, associated with it.
+ * There exists one special event within the events-table that acts as a source-event.
+ * With the rule and the source-event, a generator is constructed to produce intermediate events.
+ * A database-entry is created if and only if an event with differing attributes has to be saved.
+ * If the source-event is changed, all generated events will change as well, while events already saved WILL NOT!
+
+For easier understanding, the instances of a source-event are called occurrences. A Singular event is at the same time it's own source and occurrence.
+
+A Singular and Recurring Event behave EQUALLY, but the Singular event will return generators with only ONE element.
+
+.. py:class:: BasicEvent
+Abstract model, defines *leaf-class* - behaviour and EventManager to be inherited by all submodels of :py:class:`Event`. (It's a django ModelManager thing. Go read it up!)
+
+    .. py:method:: as_leaf_class ()
+    returns current instance as instance of :py:class:`Event`-subclass, meant to be used in queries to return subclasses when querying event-table.
+    Requires modification to save() to work as designed!
+
+.. py:class:: Event
+An Event instance is supposed to save a start, end and recurrence-interval. The Model is desinged to be subclassed in order to add further fields (like title, location, attendees, ...). :py:class:`Event` subclasses :py:class:`BasicEvent` in order to enable inheritence of the EventManager.
+
+    .. py:attribute:: duration
+    property-method, returns event-duration as timedelta object.
+
+    .. py:attribute:: seconds
+    property-method, returns :py:attr:`duration` in seconds.
+
+    .. py:attribute:: minutes
+    property-method, returns :py:attr:`duration` in minutes.
+
+    .. py:attribute:: hours
+    property-method, returns :py:attr:`duration` in hours.
+
+    .. py:method:: get_occurrences (start, end)
+    parameters *start* and *end* are expected to be datetime objects.
+    returns all occurrences after *start* and before *end*.
+
+    .. py:method:: occurrences_after (after)
+    parameter *after* is expected to be a datetime object.
+    returns all occurrences after *after*
+
+.. py:class:: EventManager
+implements convenience-selector and queryset
+
+    .. py:method:: get_for_object(content_object [, distinction=None])
+    Convenience selector: allows to grab all events which have the object associated with it.
+
+.. py:class:: EventListQuerySet
+inherits from :py:class:`SubclassingQuerySet`, which enables the :py:meth:`as_leaf_class` method.
+
+    .. py:method:: occurrences_after ([after=None [, tzinfo]])
+    returns occurrence-generator for all matched events after given start *after*. If *after* is omitted, timezone.now() is invoked instead.
