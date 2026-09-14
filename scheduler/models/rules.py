@@ -1,9 +1,6 @@
 
 from dateutil import rrule
 from django.db import models
-from django.utils.six import with_metaclass
-from django.utils.encoding import python_2_unicode_compatible
-from django.utils.six.moves.builtins import str
 
 from scheduler.models.utils import get_model_bases
 
@@ -15,8 +12,7 @@ freqs = (("YEARLY", "Yearly"),
     ("MINUTELY", "Minutely"),
     ("SECONDLY", "Secondly"))
 
-@python_2_unicode_compatible
-class Rule(with_metaclass(models.base.ModelBase, *get_model_bases())):
+class Rule(*get_model_bases(), metaclass=models.base.ModelBase):
     name=models.CharField(max_length=32)
     description = models.TextField()
     frequency = models.CharField(choices=freqs, max_length=10)

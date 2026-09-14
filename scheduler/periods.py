@@ -1,5 +1,4 @@
 from __future__ import unicode_literals
-from django.utils.six.moves.builtins import range
 # -*- coding: utf-8 -*-
 
 import datetime
@@ -9,7 +8,6 @@ from django.db.models import Q
 from django.utils import timezone
 from django.utils.dates import WEEKDAYS, WEEKDAYS_ABBR
 from django.utils.formats import date_format
-from django.utils.encoding import python_2_unicode_compatible
 
 weekday_names = []
 weekday_abbrs = []
@@ -40,7 +38,7 @@ else:
 
 
 class Period(object):
-    def __init__(self, events, start, end, persisted_occurrences=None, tzinfo = timezone.utc, occurrence_pool=None):
+    def __init__(self, events, start, end, persisted_occurrences=None, tzinfo = timezone.UTC, occurrence_pool=None):
         self.utc_start = self._normalize_timezone_to_utc(start, tzinfo)
         self.utc_end = self._normalize_timezone_to_utc(end, tzinfo)
         self.events = events
@@ -53,14 +51,14 @@ class Period(object):
         if not hasattr(point_in_time, 'tzinfo'):
             point_in_time=datetime.datetime.combine(point_in_time, datetime.time.min)
         if getattr(point_in_time, 'tzinfo', None) is not None:
-            return point_in_time.astimezone(timezone.utc)
+            return point_in_time.astimezone(timezone.UTC)
         if tzinfo is not None:
-            return point_in_time.replace(tzinfo=tzinfo).astimezone(timezone.utc)
+            return point_in_time.replace(tzinfo=tzinfo).astimezone(timezone.UTC)
         if settings.USE_TZ:
-            return point_in_time.replace(tzinfo=timezone.utc)
+            return point_in_time.replace(tzinfo=timezone.UTC)
         else:
             if timezone.is_aware(point_in_time):
-                return timezone.make_naive(point_in_time, timezone.utc)
+                return timezone.make_naive(point_in_time, timezone.UTC)
             else:
                 return point_in_time
 
@@ -93,8 +91,8 @@ class Period(object):
         else:
             # We only save DATETIME!
             if datetime.date in [type(self.start), type(self.end)]:
-                start = datetime.datetime.combine(self.start, datetime.time.min.replace(tzinfo=timezone.utc))
-                end = datetime.datetime.combine(self.end, datetime.time.min.replace(tzinfo=timezone.utc))
+                start = datetime.datetime.combine(self.start, datetime.time.min.replace(tzinfo=timezone.UTC))
+                end = datetime.datetime.combine(self.end, datetime.time.min.replace(tzinfo=timezone.UTC))
             else:
                 start = self.start
                 end = self.end
@@ -195,10 +193,9 @@ class Period(object):
         else:
             return self.utc_end.replace(tzinfo=None)
 
-@python_2_unicode_compatible
 class TimeRange(Period):
 
-    def __init__(self, events, date=None, persisted_occurrences=None, tzinfo=timezone.utc, occurrence_pool=None):
+    def __init__(self, events, date=None, persisted_occurrences=None, tzinfo=timezone.UTC, occurrence_pool=None):
         self.tzinfo=self._get_tzinfo(tzinfo)
         date = date or timezone.now().replace(tzinfo=self.tzinfo)
         start, end = self._get_range(date)
@@ -243,8 +240,8 @@ class TimeRange(Period):
         else:
             local_start = naive_start.replace(tzinfo = self.tzinfo)
             local_end = naive_end.replace(tzinfo = self.tzinfo)
-            start = local_start.astimezone(timezone.utc)
-            end = local_end.astimezone(timezone.utc)
+            start = local_start.astimezone(timezone.UTC)
+            end = local_end.astimezone(timezone.UTC)
 
         return start, end
 

@@ -1,13 +1,10 @@
 from __future__ import unicode_literals
-from django.utils.six.moves.builtins import str
-from django.utils.six import with_metaclass
 # -*- coding: utf-8 -*-
 
 import heapq
 from dateutil import rrule
 from django.db import models
 from django.utils import timezone
-from django.utils.encoding import python_2_unicode_compatible 
 from django.utils.formats import date_format
 from django.contrib.contenttypes import fields
 from django.contrib.contenttypes.models import ContentType
@@ -73,11 +70,11 @@ class EventListQuerySet(SubclassingQuerySet):
                 kwargs.setdefault('start', when)
         return super(EventListQuerySet, self).exclude(*args, **kwargs)
 
-    def occurrences_after(self, after=None, tzinfo=timezone.utc):
+    def occurrences_after(self, after=None, tzinfo=timezone.UTC):
         if after is None:
             after = timezone.now()
         #NEED TO FILTER FOR SORCE-EVENT!
-        group_events = self.model.objects.filter(
+        group_events = self.filter(
             rule__in=self.values_list('rule', flat=True).distinct(),
             cancelled=None, original_start=None, original_end=None
         ).exclude(
@@ -113,7 +110,7 @@ class EventListQuerySet(SubclassingQuerySet):
 
         while True:
             if len(occurrences) == 0:
-                raise StopIteration
+                return
 
             generator = occurrences[0][1]
 
@@ -139,8 +136,8 @@ class EventManager(models.Manager):
     def get_for_object(self, content_object, distinction=None):
         return EventRelation.objects.get_events_for_object(content_object, distinction, self)
 
-class BaseEvent(with_metaclass(models.base.ModelBase, *get_model_bases())):
-    content_type = models.ForeignKey(ContentType, editable=False, null=True)
+class BaseEvent(*get_model_bases(), metaclass=models.base.ModelBase):
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE, editable=False, null=True)
     objects = EventManager()
 
     occurrence_subclasses = {}
@@ -164,17 +161,16 @@ class BaseEvent(with_metaclass(models.base.ModelBase, *get_model_bases())):
 
 #ONLY SUBCLASS EVENT!
 #EventRelation NEEDS ForeignKey FROM NON-ABSTRACT CLASS!!!
-@python_2_unicode_compatible
 class Event(BaseEvent):
     original_start = models.DateTimeField(blank=True, null=True, editable=False)
     original_end = models.DateTimeField(blank=True, null=True, editable=False)
     start = models.DateTimeField()
     end = models.DateTimeField(help_text="The end time must be later than the start time.")
-    cancelled = models.NullBooleanField(null=True, blank=True, default=False)
+    cancelled = models.BooleanField(null=True, blank=True, default=False)
 
-    rule = models.ForeignKey(Rule, null=True, blank=True)
+    rule = models.ForeignKey(Rule, on_delete=models.SET_NULL, null=True, blank=True)
 
-    calendar = models.ForeignKey(Calendar, null=True, blank=True)
+    calendar = models.ForeignKey(Calendar, on_delete=models.SET_NULL ,null=True, blank=True)
 
     class Meta():
         abstract=False
@@ -278,7 +274,7 @@ class Event(BaseEvent):
             self.save()
 
     def _clone_model(self):
-        new_kwargs = dict([(fld.name, getattr(self, fld.name)) for fld in self._meta.fields if fld.name != 'id'])
+        new_kwargs = dict([(fld.name, getattr(self, fld.name)) for fld in self._meta.fields if (fld.name != 'id' and not fld.name.endswith("_ptr"))])
         return self.__class__(**new_kwargs)
 
     def get_occurrences(self, start, end):
@@ -348,7 +344,7 @@ class Event(BaseEvent):
         if after is None:
             after = timezone.now()
         if settings.HIDE_NAIVE_AWARE_TYPE_ERROR and timezone.is_naive(after) and settings.USE_TZ:
-            after = timezone.make_aware(after, timezone.utc)
+            after = timezone.make_aware(after, timezone.UTC)
         occ_replacer = OccurrenceReplacer(self.event_group.filter(original_start__gte = after))
 
         generator = self._occurrences_after_generator(after)
@@ -365,11 +361,11 @@ class Event(BaseEvent):
                 yield trickies.pop(0)
             
             if nxt is None:
-                raise StopIteration
+                return
 
             yield occ_replacer.get_occurrence(nxt)
 
-    def _occurrences_after_generator(self, after=None, tzinfo=timezone.utc):
+    def _occurrences_after_generator(self, after=None, tzinfo=timezone.UTC):
         if after is None:
             after = timezone.now()
         rule = self.get_rrule_object()
@@ -377,14 +373,14 @@ class Event(BaseEvent):
         if rule is None:
             if self.end > after:
                 yield self._create_occurrence(self.start, self.end)
-            raise StopIteration
+            #raise StopIteration
 
         else:
             date_iter = rule.xafter(after, inc=True)
             while True:
                 start = next(date_iter)
                 if self.rule.end_recurring_period and start > self.rule.end_recurring_period:
-                    raise StopIteration
+                    return
                 end = start + self.duration
                 if end > after:
                     yield self._create_occurrence(start, end)
@@ -431,10 +427,9 @@ class EventRelationManager(models.Manager):
         return er
 
 
-@python_2_unicode_compatible
-class EventRelation(with_metaclass(models.base.ModelBase, *get_model_bases())):
-    event = models.ForeignKey(Event)
-    content_type = models.ForeignKey(ContentType)
+class EventRelation(*get_model_bases(), metaclass=models.base.ModelBase):
+    event = models.ForeignKey(Event, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.IntegerField()
     content_object = fields.GenericForeignKey('content_type', 'object_id')
     distinction = models.CharField(max_length=20, null=True)

@@ -1,11 +1,8 @@
 from __future__ import unicode_literals
-from django.utils.six.moves.builtins import str
-from django.utils.six import with_metaclass
 # -*- coding: utf-8 -*-
 
 from django.db import models
 from django.utils.text import slugify
-from django.utils.encoding import python_2_unicode_compatible
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.contenttypes import fields
 
@@ -47,8 +44,7 @@ class CalendarManager(models.Manager):
         return self.filter(dist_q, calendarrelation__object_id=obj.id, calendarrelation__content_type=ct)
 
 
-@python_2_unicode_compatible
-class Calendar(with_metaclass(models.base.ModelBase, *get_model_bases())):
+class Calendar(*get_model_bases(), metaclass=models.base.ModelBase):
 
     name = models.CharField(max_length=200)
     slug = models.SlugField(max_length=200)
@@ -77,11 +73,9 @@ class CalendarRelationManager(models.Manager):
         cr.save()
         return cr
 
-@python_2_unicode_compatible
-class CalendarRelation(with_metaclass(models.base.ModelBase, *get_model_bases())):
-
-    calendar = models.ForeignKey(Calendar)
-    content_type=models.ForeignKey(ContentType)
+class CalendarRelation(*get_model_bases(), metaclass=models.base.ModelBase):
+    calendar = models.ForeignKey(Calendar, on_delete=models.CASCADE)
+    content_type = models.ForeignKey(ContentType, on_delete=models.CASCADE)
     object_id = models.IntegerField()
     content_object = fields.GenericForeignKey('content_type', 'object_id')
     distinction = models.CharField(max_length = 20, null=True)

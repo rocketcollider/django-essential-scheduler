@@ -1,5 +1,3 @@
-from django.utils.six.moves.builtins import zip
-from django.utils.six.moves.builtins import range
 import datetime
 
 from django.test import TestCase
@@ -27,19 +25,19 @@ class NewYork(datetime.tzinfo):
 class TestPeriod(TestCase):
 
     def setUp(self):
-        rule = Rule(frequency = "WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency = "WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
         cal = Calendar(name="MyCal")
         cal.save()
         data = {
-                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 'rule': rule,
                 'calendar': cal
         }
         data2 = {
-                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 'calendar': cal
         }
         recurring_event = Event(**data)
@@ -47,8 +45,8 @@ class TestPeriod(TestCase):
         singular_event = Event(**data2)
         singular_event.save()
         self.period = Period(events=Event.objects.source_events(),
-                            start = datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.utc),
-                            end = datetime.datetime(2008, 1, 21, 7, 0, tzinfo=timezone.utc))
+                            start = datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.UTC),
+                            end = datetime.datetime(2008, 1, 21, 7, 0, tzinfo=timezone.UTC))
 
     def test_get_occurrences(self):
         occurrence_list = self.period.occurrences
@@ -66,39 +64,41 @@ class TestPeriod(TestCase):
             for occ_dict in occurrence_dicts],
             [
                 (1,
-                 datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc)),
+                 datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC)),
                 (1,
-                 datetime.datetime(2008, 1, 12, 8, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 12, 9, 0, tzinfo=timezone.utc)),
+                 datetime.datetime(2008, 1, 12, 8, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 12, 9, 0, tzinfo=timezone.UTC)),
                 (1,
-                 datetime.datetime(2008, 1, 19, 8, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 19, 9, 0, tzinfo=timezone.utc))
+                 datetime.datetime(2008, 1, 19, 8, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 19, 9, 0, tzinfo=timezone.UTC))
             ])
 
     def test_has_occurrence(self):
-        self.assert_( self.period.has_occurrences )
-        slot = self.period.get_time_slot( datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.utc),
-                                          datetime.datetime(2008, 1, 4, 7, 12, tzinfo=timezone.utc) )
-        self.failIf( slot.has_occurrences )
+        #self.assert_( self.period.has_occurrences )
+        assert self.period.has_occurrences
+        slot = self.period.get_time_slot( datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.UTC),
+                                          datetime.datetime(2008, 1, 4, 7, 12, tzinfo=timezone.UTC) )
+        #self.failIf( slot.has_occurrences )
+        assert not slot.has_occurrences
 
     def test_occurrence_pool_w_wrong_group(self):
         occ = self.period.events[0].get_occurrences(
-            start = datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.utc),
-            end = datetime.datetime(2008, 1, 21, 7, 0, tzinfo=timezone.utc) 
+            start = datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.UTC),
+            end = datetime.datetime(2008, 1, 21, 7, 0, tzinfo=timezone.UTC)
         )
         occ[0].rule = Rule(frequency="YEARLY")
-        occ.append(self.period.events[1].get_occurrence(datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.utc)))
+        occ.append(self.period.events[1].get_occurrence(datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.UTC)))
         self.period.occurrence_pool = occ
         occurrences = self.period.occurrences
         self.assertEqual(len(occurrences), 3)
 
     def test_get_persisted_occurrences(self):
         self.period.events[0].get_occurrences(
-            start = datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.utc),
-            end = datetime.datetime(2008, 1, 21, 7, 0, tzinfo=timezone.utc) 
-        )[0].move(datetime.datetime(2008, 1, 19, 8, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 19, 9, 0, tzinfo=timezone.utc))
+            start = datetime.datetime(2008, 1, 4, 7, 0, tzinfo=timezone.UTC),
+            end = datetime.datetime(2008, 1, 21, 7, 0, tzinfo=timezone.UTC)
+        )[0].move(datetime.datetime(2008, 1, 19, 8, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 19, 9, 0, tzinfo=timezone.UTC))
         persisted = self.period.get_persisted_occurrences()
         self.assertEqual(len(persisted), 2)
         self.assertTrue(self.period.events[1] in persisted)
@@ -106,30 +106,30 @@ class TestPeriod(TestCase):
 class TestYear(TestCase):
 
     def setUp(self):
-        self.year = Year(events=[], date=datetime.datetime(2008, 4, 1, tzinfo=timezone.utc))
+        self.year = Year(events=[], date=datetime.datetime(2008, 4, 1, tzinfo=timezone.UTC))
 
     def test_get_months(self):
         months = self.year.get_months
         self.assertEqual([month.start for month in months],
-            [datetime.datetime(2008, i, 1, tzinfo=timezone.utc) for i in range(1,13)])
+            [datetime.datetime(2008, i, 1, tzinfo=timezone.UTC) for i in range(1,13)])
 
 class TestMonth(TestCase):
 
     def setUp(self):
-        rule = Rule(frequency = "WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency = "WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
         cal = Calendar(name="MyCal")
         cal.save()
         data = {
-                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 'rule': rule,
                 'calendar': cal
                }
         recurring_event = Event(**data)
         recurring_event.save()
         self.month = Month(events=Event.objects.source_events(),
-                           date=datetime.datetime(2008, 2, 7, 9, 0, tzinfo=timezone.utc))
+                           date=datetime.datetime(2008, 2, 7, 9, 0, tzinfo=timezone.UTC))
 
     def pest_get_weeks(self):
         weeks = self.month.get_weeks()
@@ -137,29 +137,29 @@ class TestMonth(TestCase):
 
         if settings.FIRST_DAY_OF_WEEK == 0:
             expecteds = [
-                (datetime.datetime(2008, 1, 27, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 10, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 10, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 17, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 17, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 24, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 24, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 3, 2, 0, 0, tzinfo=timezone.utc))
+                (datetime.datetime(2008, 1, 27, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 10, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 10, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 17, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 17, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 24, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 24, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 3, 2, 0, 0, tzinfo=timezone.UTC))
             ]
         else:
             expecteds = [
-                (datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 4, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 4, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 11, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 11, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 18, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 18, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 25, 0, 0, tzinfo=timezone.utc)),
-                (datetime.datetime(2008, 2, 25, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 3, 3, 0, 0, tzinfo=timezone.utc))
+                (datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 4, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 4, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 11, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 11, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 18, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 18, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 25, 0, 0, tzinfo=timezone.UTC)),
+                (datetime.datetime(2008, 2, 25, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 3, 3, 0, 0, tzinfo=timezone.UTC))
             ]
 
         for actual, expected in zip(actuals, expecteds):
@@ -175,57 +175,57 @@ class TestMonth(TestCase):
             expecteds = [
                 (
                     0,
-                    datetime.datetime(2008, 1, 27, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 1, 27, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.UTC)
                 ),
                 (
                     0,
-                    datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.UTC)
                 ),
                 (
                     0,
-                    datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.UTC)
                 ),
                 (
                     0,
-                    datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.UTC)
                 ),
                 (
                     0,
-                    datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.UTC)
                 ),
                 (
                     0,
-                    datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.UTC)
                 ),
                 (
                     1,
-                    datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.utc)
+                    datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.UTC)
                 ),
             ]
 
         else:
             expecteds = [
-                (0, datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.utc)),
-                (0, datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.utc)),
-                (0, datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.utc)),
-                (0, datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.utc)),
-                (0, datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.utc)),
-                (1, datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.utc)),
-                (0, datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.utc),
-                 datetime.datetime(2008, 2, 4, 0, 0, tzinfo=timezone.utc))
+                (0, datetime.datetime(2008, 1, 28, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.UTC)),
+                (0, datetime.datetime(2008, 1, 29, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.UTC)),
+                (0, datetime.datetime(2008, 1, 30, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.UTC)),
+                (0, datetime.datetime(2008, 1, 31, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.UTC)),
+                (0, datetime.datetime(2008, 2, 1, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.UTC)),
+                (1, datetime.datetime(2008, 2, 2, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.UTC)),
+                (0, datetime.datetime(2008, 2, 3, 0, 0, tzinfo=timezone.UTC),
+                 datetime.datetime(2008, 2, 4, 0, 0, tzinfo=timezone.UTC))
             ]
 
         for actual, expected in zip(actuals, expecteds):
@@ -233,28 +233,28 @@ class TestMonth(TestCase):
 
 
     def test_month_convenience_functions(self):
-        self.assertEqual( self.month.prev.start, datetime.datetime(2008, 1, 1, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual( self.month.next.start, datetime.datetime(2008, 3, 1, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual( self.month.current_year.start, datetime.datetime(2008, 1, 1, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual( self.month.current_year.prev.start, datetime.datetime(2007, 1, 1, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual( self.month.current_year.next.start, datetime.datetime(2009, 1, 1, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual( self.month.prev.start, datetime.datetime(2008, 1, 1, 0, 0, tzinfo=timezone.UTC))
+        self.assertEqual( self.month.next.start, datetime.datetime(2008, 3, 1, 0, 0, tzinfo=timezone.UTC))
+        self.assertEqual( self.month.current_year.start, datetime.datetime(2008, 1, 1, 0, 0, tzinfo=timezone.UTC))
+        self.assertEqual( self.month.current_year.prev.start, datetime.datetime(2007, 1, 1, 0, 0, tzinfo=timezone.UTC))
+        self.assertEqual( self.month.current_year.next.start, datetime.datetime(2009, 1, 1, 0, 0, tzinfo=timezone.UTC))
 
 class TestDay(TestCase):
     def setUp(self):
         self.day = Day(events=Event.objects.all(),
-                           date=datetime.datetime(2008, 2, 7, 9, 0, tzinfo=timezone.utc))
+                           date=datetime.datetime(2008, 2, 7, 9, 0, tzinfo=timezone.UTC))
 
     def test_day_setup(self):
-        self.assertEqual( self.day.start, datetime.datetime(2008, 2, 7, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual( self.day.end, datetime.datetime(2008, 2, 8, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual( self.day.start, datetime.datetime(2008, 2, 7, 0, 0, tzinfo=timezone.UTC))
+        self.assertEqual( self.day.end, datetime.datetime(2008, 2, 8, 0, 0, tzinfo=timezone.UTC))
 
     def test_day_convenience_functions(self):
-        self.assertEqual( self.day.prev.start, datetime.datetime(2008, 2, 6, 0, 0, tzinfo=timezone.utc))
-        self.assertEqual( self.day.next.start, datetime.datetime(2008, 2, 8, 0, 0, tzinfo=timezone.utc))
+        self.assertEqual( self.day.prev.start, datetime.datetime(2008, 2, 6, 0, 0, tzinfo=timezone.UTC))
+        self.assertEqual( self.day.next.start, datetime.datetime(2008, 2, 8, 0, 0, tzinfo=timezone.UTC))
 
     def test_time_slot(self):
-        slot_start = datetime.datetime(2008, 2, 7, 13, 30, tzinfo=timezone.utc)
-        slot_end = datetime.datetime(2008, 2, 7, 15, 0, tzinfo=timezone.utc)
+        slot_start = datetime.datetime(2008, 2, 7, 13, 30, tzinfo=timezone.UTC)
+        slot_end = datetime.datetime(2008, 2, 7, 15, 0, tzinfo=timezone.UTC)
         period = self.day.get_time_slot( slot_start, slot_end )
         self.assertEqual( period.start, slot_start )
         self.assertEqual( period.end, slot_end )
@@ -271,7 +271,7 @@ class TestDay(TestCase):
 
         NY = NewYork()
         user_wall_time = datetime.datetime(2015, 11, 4, 21, 30, tzinfo=NY)
-        timezone_now = user_wall_time.astimezone(timezone.utc)
+        timezone_now = user_wall_time.astimezone(timezone.UTC)
 
         #THIS IS TO SIMULATE timezone.now() WITH FIXED DATE!!!!
         test_day = Day(
@@ -279,8 +279,8 @@ class TestDay(TestCase):
             date=timezone_now,
             tzinfo=NY)
 
-        expected_start = datetime.datetime(2015, 11, 4, 5, 00, tzinfo=timezone.utc)
-        expected_end = datetime.datetime(2015, 11, 5, 5, 00, tzinfo=timezone.utc)
+        expected_start = datetime.datetime(2015, 11, 4, 5, 00, tzinfo=timezone.UTC)
+        expected_end = datetime.datetime(2015, 11, 5, 5, 00, tzinfo=timezone.UTC)
 
         self.assertEqual( test_day.start, expected_start)
         self.assertEqual( test_day.end, expected_end)
@@ -337,8 +337,8 @@ class TestAwareDay(TestCase):
         )
 
     def test_day_range(self):
-        start = datetime.datetime(2008, 2, 7, 5, 0, tzinfo=timezone.utc)
-        end = datetime.datetime(2008, 2, 8, 5, 0, tzinfo=timezone.utc)
+        start = datetime.datetime(2008, 2, 7, 5, 0, tzinfo=timezone.UTC)
+        end = datetime.datetime(2008, 2, 8, 5, 0, tzinfo=timezone.UTC)
 
         self.assertEqual(start, self.day.start)
         self.assertEqual(end, self.day.end)
@@ -403,13 +403,13 @@ class TestAwareYear(TestCase):
 class TestOccurrencePool(TestCase):
 
     def setUp(self):
-        rule = Rule(frequency = "WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency = "WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
         cal = Calendar(name="MyCal")
         cal.save()
         data = {
-                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 'rule': rule,
                 'calendar': cal
                }
@@ -421,8 +421,8 @@ class TestOccurrencePool(TestCase):
             Test that period initiated with occurrence_pool returns the same occurrences as "straigh" period
             in a corner case whereby a period's start date is equal to the occurrence's end date
         """
-        start = datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc)
-        end = datetime.datetime(2008, 1, 5, 10, 0, tzinfo=timezone.utc)
+        start = datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC)
+        end = datetime.datetime(2008, 1, 5, 10, 0, tzinfo=timezone.UTC)
         parent_period = Period(Event.objects.all(), start, end)
         period = Period(parent_period.events, start, end, parent_period.get_persisted_occurrences(), occurrence_pool=parent_period.occurrences)
         self.assertEqual(parent_period.occurrences, period.occurrences)

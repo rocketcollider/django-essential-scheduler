@@ -10,24 +10,24 @@ from tests.models import *
 
 class TestOccurrence(TestCase):
     def setUp(self):
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
         cal = Calendar(name="MyCal")
         cal.save()
         self.recurring_data = {
-            'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-            'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+            'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+            'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
             'rule': rule,
             'calendar': cal
         }
         self.data = {
-            'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-            'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+            'start': datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+            'end': datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
             'calendar': cal
         }
         self.recurring_event = Event.objects.create(**self.recurring_data)
-        self.start = datetime.datetime(2008, 1, 12, 0, 0, tzinfo=timezone.utc)
-        self.end = datetime.datetime(2008, 1, 27, 0, 0, tzinfo=timezone.utc)
+        self.start = datetime.datetime(2008, 1, 12, 0, 0, tzinfo=timezone.UTC)
+        self.end = datetime.datetime(2008, 1, 27, 0, 0, tzinfo=timezone.UTC)
 
     def test_presisted_occurrences(self):
         occurrences = self.recurring_event.get_occurrences(start=self.start, end=self.end)

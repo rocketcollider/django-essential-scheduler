@@ -38,14 +38,14 @@ class TestEvent(TestCase):
         cal.save()
 
         data_1 = {
-            'start': datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-            'end': datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
+            'start': datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+            'end': datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
             'calendar': cal,
         }
 
         data_2 = {
-            'start': datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
-            'end': datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.utc),
+            'start': datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
+            'end': datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.UTC),
             'calendar': cal
         }
         event_one = Event(**data_1)
@@ -53,12 +53,12 @@ class TestEvent(TestCase):
         event_one.save()
         event_two.save()
 
-        occurrences_two = event_two.get_occurrences(datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
-                                                    datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.utc))
+        occurrences_two = event_two.get_occurrences(datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
+                                                    datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.UTC))
         self.assertEqual(1, len(occurrences_two))
 
-        occurrences_one = event_one.get_occurrences(datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
-                                                    datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.utc))
+        occurrences_one = event_one.get_occurrences(datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
+                                                    datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.UTC))
 
         self.assertEqual(0, len(occurrences_one))
 
@@ -66,21 +66,21 @@ class TestEvent(TestCase):
 
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period= datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period= datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
 
         recurring_event = self.__create_recurring_event(
 
-                    datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                    datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
 
                     rule,
                     cal,
                     )
         recurring_event.save()
 
-        occurrences = recurring_event.get_occurrences(start=datetime.datetime(2008, 1, 12, 0, 0, tzinfo=timezone.utc),
-                                                      end=datetime.datetime(2008, 1, 20, 0, 0, tzinfo=timezone.utc))
+        occurrences = recurring_event.get_occurrences(start=datetime.datetime(2008, 1, 12, 0, 0, tzinfo=timezone.UTC),
+                                                      end=datetime.datetime(2008, 1, 20, 0, 0, tzinfo=timezone.UTC))
 
         self.assertEqual(["%s to %s" % (o.start, o.end) for o in occurrences],
                           ['2008-01-12 08:00:00+00:00 to 2008-01-12 09:00:00+00:00',
@@ -90,20 +90,20 @@ class TestEvent(TestCase):
     def test_recurring_event_get_occurrences_2(self):
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2013, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2013, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
-        rule2 = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2013, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule2 = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2013, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule2.save()
 
         recurring_partly = self.__create_recurring_event(
-                    datetime.datetime(2012, 12, 29, 11, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2012, 12, 29, 13, 0, tzinfo=timezone.utc),
+                    datetime.datetime(2012, 12, 29, 11, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2012, 12, 29, 13, 0, tzinfo=timezone.UTC),
                     rule,
                     cal,
                     )
         recurring_outside = self.__create_recurring_event(
-                    datetime.datetime(2012, 12, 29, 13, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2012, 12, 29, 14, 0, tzinfo=timezone.utc),
+                    datetime.datetime(2012, 12, 29, 13, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2012, 12, 29, 14, 0, tzinfo=timezone.UTC),
                     rule2,
                     cal,
                     )
@@ -112,8 +112,8 @@ class TestEvent(TestCase):
         recurring_partly.save()
 
         test_window=[
-            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
-            datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.utc)
+            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.UTC)
         ]
 
         recurrences_partly = recurring_partly.get_occurrences(*test_window)
@@ -127,18 +127,18 @@ class TestEvent(TestCase):
         cal = Calendar(name="MyCal")
         cal.save()
         event_outside = self.__create_event(
-                datetime.datetime(2013, 1, 5, 7, 0, tzinfo=timezone.utc),
-                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2013, 1, 5, 7, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 cal
         )
         event_partly = self.__create_event(
-                datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2013, 1, 5, 10, 0, tzinfo=timezone.utc),
+                datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2013, 1, 5, 10, 0, tzinfo=timezone.UTC),
                 cal
         )
         event_inside = self.__create_event(
-                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
-                datetime.datetime(2013, 1, 5, 11, 0, tzinfo=timezone.utc),
+                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2013, 1, 5, 11, 0, tzinfo=timezone.UTC),
 
                 cal
         )
@@ -146,8 +146,8 @@ class TestEvent(TestCase):
         event_partly.save()
         event_inside.save()
         test_window=[
-            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
-            datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.utc)
+            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.UTC)
         ]
 
         occurrences_outside = event_outside.get_occurrences(*test_window)
@@ -163,20 +163,20 @@ class TestEvent(TestCase):
 
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
         recurring_event= self.__create_recurring_event(
-                    datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                    datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                     rule,
                     cal,
                     )
 
         recurring_event.save()
-        occurrences = recurring_event.get_occurrences(start=datetime.datetime(2008, 1, 5, tzinfo=timezone.utc),
-            end = datetime.datetime(2008, 1, 6, tzinfo=timezone.utc))
+        occurrences = recurring_event.get_occurrences(start=datetime.datetime(2008, 1, 5, tzinfo=timezone.UTC),
+            end = datetime.datetime(2008, 1, 6, tzinfo=timezone.UTC))
         occurrence = occurrences[0]
-        occurrence2 = next(recurring_event.occurrences_after(datetime.datetime(2008, 1, 5, tzinfo=timezone.utc)))
+        occurrence2 = next(recurring_event.occurrences_after(datetime.datetime(2008, 1, 5, tzinfo=timezone.UTC)))
         self.assertEqual(occurrence, occurrence2)
 
     def test_recurring_event_get_occurrences_after_with_moved_occ(self):
@@ -184,58 +184,58 @@ class TestEvent(TestCase):
 
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
         recurring_event= self.__create_recurring_event(
 
-                    datetime.datetime(2008, 1, 1, 2, 0, tzinfo=timezone.utc),
-                    datetime.datetime(2008, 1, 1, 3, 0, tzinfo=timezone.utc),
+                    datetime.datetime(2008, 1, 1, 2, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2008, 1, 1, 3, 0, tzinfo=timezone.UTC),
 
                     rule,
                     cal,
                     )
 
         recurring_event.save()
-        occurrence = recurring_event.get_occurrence(datetime.datetime(2008, 1, 8, 2, 0, tzinfo=timezone.utc), True)
+        occurrence = recurring_event.get_occurrence(datetime.datetime(2008, 1, 8, 2, 0, tzinfo=timezone.UTC), True)
         occurrence.move(
-          datetime.datetime(2008, 1, 15, 2, 0, tzinfo=timezone.utc),
-          datetime.datetime(2008, 1, 15, 3, 0, tzinfo=timezone.utc))
+          datetime.datetime(2008, 1, 15, 2, 0, tzinfo=timezone.UTC),
+          datetime.datetime(2008, 1, 15, 3, 0, tzinfo=timezone.UTC))
         occurrence2 = recurring_event.get_occurrence(
-          datetime.datetime(2008, 1, 14, 8, 0, tzinfo=timezone.utc))
+          datetime.datetime(2008, 1, 14, 8, 0, tzinfo=timezone.UTC))
         self.assertEqual(occurrence, occurrence2)
-        self.assertEqual(datetime.datetime(2008, 1, 15, 2, 0, tzinfo=timezone.utc), occurrence2.start)
+        self.assertEqual(datetime.datetime(2008, 1, 15, 2, 0, tzinfo=timezone.UTC), occurrence2.start)
 
     def test_recurring_event_get_occurrence(self):
 
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
 
         event = self.__create_recurring_event(
-                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 rule,
                 cal,
             )
         event.save()
 
-        occurrence = event.get_occurrence(datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc))
+        occurrence = event.get_occurrence(datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC))
         occurrence.save()
-        self.assertEqual(occurrence.start, datetime.datetime(2008, 1, 5, 8, tzinfo=timezone.utc))
-        occurrence = event.get_occurrence(datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc))
+        self.assertEqual(occurrence.start, datetime.datetime(2008, 1, 5, 8, tzinfo=timezone.UTC))
+        occurrence = event.get_occurrence(datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC))
         self.assertTrue(occurrence.pk is not None)
 
     @override_settings(HIDE_NAIVE_AWARE_TYPE_ERROR=True)
     def test_prevent_TypeError_when_comparing_naive_w_aware_dates(self):
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
 
         event = self.__create_recurring_event(
-                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 rule,
                 cal,
             )
@@ -313,8 +313,8 @@ class TestEvent(TestCase):
         cal = Calendar(name='MyCal')
         cal.save()
         event = self.__create_event(
-                datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 cal
         )
         event.save()
@@ -341,37 +341,39 @@ class TestEvent(TestCase):
     def test_occurrence_by_slug(self):
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
 
         event = self.__create_recurring_event(
-                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 rule,
                 cal,
             )
         event.save()
 
-        occurrence = Event.objects.get(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 12, 8, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d-%H-%M%z')))
-        self.assertEqual(occurrence.start, datetime.datetime(2008, 1, 12, 8, tzinfo=timezone.utc))
+        occurrence = Event.objects.get(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 12, 8, 0, tzinfo=timezone.UTC).strftime('%Y-%m-%d-%H-%M%z')))
+        self.assertEqual(occurrence.start, datetime.datetime(2008, 1, 12, 8, tzinfo=timezone.UTC))
 
-        occurrence2 = Event.objects.get(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 13, 8, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d-%H-%M%z')))
-        self.assertEqual(occurrence2.start, datetime.datetime(2008, 1, 19, 8, tzinfo=timezone.utc))
+        occurrence2 = Event.objects.get(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 13, 8, 0, tzinfo=timezone.UTC).strftime('%Y-%m-%d-%H-%M%z')))
+        self.assertEqual(occurrence2.start, datetime.datetime(2008, 1, 19, 8, tzinfo=timezone.UTC))
 
-        filtered1 = Event.objects.filter(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 12, 8, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d-%H-%M%z')))
+        filtered1 = Event.objects.filter(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 12, 8, 0, tzinfo=timezone.UTC).strftime('%Y-%m-%d-%H-%M%z')))
         #can we avoid inifinite recursion?
-        filtered1._fetch_all()
-        self.assertEqual(filtered1[0].start, datetime.datetime(2008, 1, 12, 8, tzinfo=timezone.utc))
+        #filtered1._fetch_all()
+        occurences1 = filtered1.iterator()
+        self.assertEqual(occurences1[0].start, datetime.datetime(2008, 1, 12, 8, tzinfo=timezone.UTC))
 
-        filtered2 = Event.objects.filter(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 13, 8, 0, tzinfo=timezone.utc).strftime('%Y-%m-%d-%H-%M%z')))
-        self.assertEqual(filtered2[0].start, datetime.datetime(2008, 1, 19, 8, tzinfo=timezone.utc))
+        filtered2 = Event.objects.filter(slug="%i-%s"%(event.pk, datetime.datetime(2008, 1, 13, 8, 0, tzinfo=timezone.UTC).strftime('%Y-%m-%d-%H-%M%z')))
+        occurences2 = filtered2.iterator()
+        self.assertEqual(occurences2[0].start, datetime.datetime(2008, 1, 19, 8, tzinfo=timezone.UTC))
 
     def test_simple_event_slug_value(self):
         cal = Calendar(name="MyCal")
         cal.save()
         event = self.__create_event(
-                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 cal,
             )
         self.assertEqual(event.slug, None)
@@ -382,12 +384,12 @@ class TestEvent(TestCase):
     def test_recurring_event_slug_value(self):
         cal = Calendar(name="MyCal")
         cal.save()
-        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.utc))
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2008, 5, 5, 0, 0, tzinfo=timezone.UTC))
         rule.save()
 
         event = self.__create_recurring_event(
-                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2008, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2008, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 rule,
                 cal,
             )
@@ -395,7 +397,7 @@ class TestEvent(TestCase):
         event.save()
         self.assertEqual(event.slug, '1-2008-01-05-08-00+0000')
 
-class TestEventInheritance(TestEvent):
+class TestEventInheritance(TestCase):
 
     def __create_event(self, title, start, end, cal):
         return TestSubEvent(**{
@@ -419,14 +421,14 @@ class TestEventInheritance(TestEvent):
         cal.save()
         event = self.__create_event(
             "Heeello!",
-            datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
+            datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
             cal
         )
         event.save()
         occ = event.get_occurrences(
-            datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-            datetime.datetime(2014, 1, 5, 8, 0, tzinfo=timezone.utc)
+            datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2014, 1, 5, 8, 0, tzinfo=timezone.UTC)
         )
         self.assertEqual(1, len(occ))
 
@@ -441,8 +443,8 @@ class TestEventInheritance(TestEvent):
         cal.save()
         event = self.__create_event(
                 'event test',
-                datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
+                datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+                datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
                 cal
         )
         event.save()
@@ -462,8 +464,8 @@ class TestEventInheritance(TestEvent):
         cal.save()
         event = self.__create_event(
             "Heeello!",
-            datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.utc),
-            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.utc),
+            datetime.datetime(2013, 1, 5, 8, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
             cal
         )
         event.save()

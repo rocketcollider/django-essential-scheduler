@@ -37,8 +37,6 @@ MIDDLEWARE_CLASSES = [
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
 
-ROOT_URLCONF = 'projectTracker.urls'
-
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
@@ -58,9 +56,6 @@ TEMPLATES = [
 TEMPLATE_CONTEXT_PROCESSORS = (
     "django.core.context_processors.request",
 )
-
-WSGI_APPLICATION = 'projectTracker.wsgi.application'
-
 
 # Database
 # https://docs.djangoproject.com/en/1.9/ref/settings/#databases
