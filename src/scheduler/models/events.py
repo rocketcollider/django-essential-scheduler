@@ -18,6 +18,20 @@ SLUG_DATE_FORMAT='%Y-%m-%d-%H-%M%z'
 if not settings.USE_TZ:
     SLUG_DATE_FORMAT='%Y-%m-%d-%H-%M'
 
+class ComparableGenerator(tuple):
+    """
+    This class is a little hack.
+    It allows the heap to be sorted by the value of next generator (an Event)
+    While making sure even exactly matching events are resolved in an arbitrary sorting.
+    """
+    def __new__(cls, generator):
+        try:
+            return super().__new__(cls, (next(generator), generator))
+        except StopIteration:
+            return super().__new__(cls,)
+    def __lt__(self, compare):
+        return self[0]<compare[0]
+
 class EventListQuerySet(SubclassingQuerySet):
 
     def _resolve_slug(self, slug):
@@ -70,55 +84,85 @@ class EventListQuerySet(SubclassingQuerySet):
                 kwargs.setdefault('start', when)
         return super(EventListQuerySet, self).exclude(*args, **kwargs)
 
+    def occur_within(self, start, end, tzinfo=timezone.UTC):
+        #restrict current selection (self) to events with recurrence-rules
+        #overlapping with the selection window
+        occrs = self.exclude(
+            rule__start_recurring_period__gte=end
+        ).occurrences_after(start, tzinfo=timezone.UTC)
+        for occr in occrs:
+            if occr.start >= end:
+                break
+            yield occr
+
     def occurrences_after(self, after=None, tzinfo=timezone.UTC):
         if after is None:
             after = timezone.now()
         #NEED TO FILTER FOR SORCE-EVENT!
         group_events = self.filter(
             rule__in=self.values_list('rule', flat=True).distinct(),
-            cancelled=None, original_start=None, original_end=None
+            original_start=None, original_end=None
         ).exclude(
             rule__end_recurring_period__lte=after
-        )
+        ).exclude(cancelled=True)
+        #get all occurences which have been changed
         occ_replacer = NextOccurrenceReplacer(self.exclude(
-                cancelled=None, original_start=None, original_end=None
+            rule__end_recurring_period__lte=after,
+        ).exclude(
+            cancelled=None, original_start=None, original_end=None
         ))
-        source_events = self.filter(
+        pure_events = self.filter(
             rule=None, end__gt=after
         )
+
         #This is a little hacky:
         #The second for is used ONLY as an assignment!
         #(By using this expression, just one loop is required!)
         occurrences = [
-            (next(generator), generator)
+            comparable
             for event_group in group_events
-            # generator = event_group._occurrences_after_generator(after)
-            for generator in [
-                event_group._occurrences_after_generator(after)
+            # comparable = ComparableGenerator(event_group._occurrences_after_generator(after))
+            for comparable in [
+                ComparableGenerator(
+                    event_group._occurrences_after_generator(after)
+                )
             ]
+            if comparable
         ]
         #Taking care of rule=None events.
         occurrences += [
-            (next(generator), generator)
+            comparable
+            for event in self.filter(rule=None)
+            # comparable = ComparableGenerator(event_group._occurrences_after_generator(after))
+            for comparable in [
+                ComparableGenerator(event._occurrences_after_generator(after))
+            ]
+            if comparable
+        ]
+        heapq.heapify([
+            comparable
             for event in self.filter(rule=None)
             # generator = event_group._occurrences_after_generator(after)
-            for generator in [
-                event._occurrences_after_generator(after)
+            for comparable in [
+                ComparableGenerator(event._occurrences_after_generator(after))
             ]
-        ]
+            if comparable
+        ])
         heapq.heapify(occurrences)
 
         while True:
             if len(occurrences) == 0:
                 return
 
-            generator = occurrences[0][1]
+            comparable = ComparableGenerator(occurrences[0][1])
+            #ensure next_occurence is set
+            next_occurence = heapq.heapreplace(occurrences,comparable)[0] \
+                    if comparable else                                    \
+                heapq.heappop(occurrences)[0]
 
-            try:
-                next_occurence = heapq.heapreplace(occurrences, (next(generator), generator))[0]
-            except StopIteration:
-                next_occurence = heapq.heappop(occurrences)[0]
             for occ in occ_replacer.get_next_occurrences(next_occurence):
+                if occ.end < after:
+                    continue
                 yield occ
 
 from datetime import datetime
@@ -205,8 +249,8 @@ class Event(BaseEvent):
                 if not kwargs['rule'].start_recurring_period:
                     kwargs['rule'].start_recurring_period = kwargs['start']
                     kwargs['rule'].save()
-                kwargs.setdefault('original_start', kwargs['start'])
-                kwargs.setdefault('original_end'  , kwargs['end']  )
+                #kwargs.setdefault('original_start', kwargs['start'])
+                #kwargs.setdefault('original_end'  , kwargs['end']  )
 
         self.group_source = self
 
@@ -223,10 +267,16 @@ class Event(BaseEvent):
         return '%s - %s%s' %(date_format(self.start), date_format(self.end), ", GROUP_SOURCE" if self.cancelled == None else "")
 
     def __lt__(self, other):
-        return self.end < other.end
+        return self.end < other.end or (self.end==other.end and self.start<other.start)
 
     def __gt__(self, other):
-        return self.start > other.start
+        return self.start > other.start or (self.start==other.start and self.end>other.end)
+
+    def __le__(self, other):
+        return self.end < other.end or (self.end == other.end and self.start <= other.start)
+
+    def __ge__(self, other):
+        return self.start > other.start or (self.start==self.end and self.end >= other.end)
 
     #Need this WHAT FOR exactly?
     def __eq__(self, other):
@@ -331,7 +381,8 @@ class Event(BaseEvent):
             return None
         params = self.rule.get_params()
         frequency = self.rule.rrule_frequency()
-        return rrule.rrule(frequency, dtstart = self.rule.start_recurring_period, **params)
+        until = getattr(self, "end_recurring_period", None)
+        return rrule.rrule(frequency, dtstart = self.start, until = until, **params)
 
     def get_occurrence(self, start, exact=False):
         ret = next(self.occurrences_after(start))
@@ -373,13 +424,12 @@ class Event(BaseEvent):
         if rule is None:
             if self.end > after:
                 yield self._create_occurrence(self.start, self.end)
-            #raise StopIteration
 
         else:
             date_iter = rule.xafter(after, inc=True)
             while True:
                 start = next(date_iter)
-                if self.rule.end_recurring_period and start > self.rule.end_recurring_period:
+                if self.rule.end_recurring_period and start >= self.rule.end_recurring_period:
                     return
                 end = start + self.duration
                 if end > after:

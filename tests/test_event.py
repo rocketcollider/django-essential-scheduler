@@ -26,7 +26,6 @@ class TestEvent(TestCase):
 
     def __create_recurring_event(self, start, end, rule, cal):
         return Event(**{
-
                 'start': start,
                 'end': end,
                 'rule': rule,
@@ -110,7 +109,7 @@ class TestEvent(TestCase):
 
         recurring_outside.save()
         recurring_partly.save()
-
+        #18 weeks, +1 occ in december == 19 occurences. 2 different events == 38 occurences
         test_window=[
             datetime.datetime(2013, 1, 5, 9, 0, tzinfo=timezone.UTC),
             datetime.datetime(2013, 1, 5, 12, 0, tzinfo=timezone.UTC)
@@ -121,6 +120,11 @@ class TestEvent(TestCase):
 
         recurrences_outside = recurring_outside.get_occurrences(*test_window)
         self.assertEqual(0, len(recurrences_outside))
+
+        #excluding first event
+        self.assertEqual(36, len(list(Event.objects.all().occurrences_after(datetime.datetime(2012, 12, 30, 11, 0, tzinfo=timezone.UTC)))))
+
+        self.assertEqual(4, len(list(Event.objects.all().occur_within(datetime.datetime(2013, 1, 9, 10, 0, tzinfo=timezone.UTC), datetime.datetime(2013, 1, 23, 20, 0, tzinfo=timezone.UTC)))))
 
     def test_event_get_occurrences(self):
 
@@ -475,3 +479,72 @@ class TestEventInheritance(TestCase):
         newev = Event.objects.get(pk=1)
         testev = newev.as_leaf_class()
         self.assertEqual(testev, ev)
+
+
+class TestOccurenceMagic(TestCase):
+
+    def __create_recurring_event(self, title, start, end, rule, cal):
+        return TestSubEvent(**{
+                'title': title,
+                'start': start,
+                'end': end,
+                'rule': rule,
+                'calendar': cal
+        })
+
+    def test_occurrence_between(self):
+        cal = Calendar(name="MyCal")
+        cal.save()
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2013, 5, 5, 0, 0, tzinfo=timezone.UTC))
+        rule.save()
+
+        recurring_partly = self.__create_recurring_event(
+                    "testest",
+                    datetime.datetime(2012, 12, 29, 11, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2012, 12, 29, 13, 0, tzinfo=timezone.UTC),
+                    rule,
+                    cal,
+                    )
+
+        recurring_partly.save()
+
+        occurrence_generator = TestSubEvent.objects.all().occur_within(
+            datetime.datetime(2012, 12, 30, 13, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2013, 1, 13, 0, 0, tzinfo=timezone.UTC)
+            )
+        all_events=list(occurrence_generator)
+        self.assertEqual(len(all_events), 2)
+
+    def test_multiple_occurences_between(self):
+        cal = Calendar(name="MyCal")
+        cal.save()
+        rule = Rule(frequency="WEEKLY", end_recurring_period=datetime.datetime(2013, 5, 5, 0, 0, tzinfo=timezone.UTC))
+        rule.save()
+
+        recurring_partly1 = self.__create_recurring_event(
+                    "testest",
+                    datetime.datetime(2012, 12, 29, 11, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2012, 12, 29, 13, 0, tzinfo=timezone.UTC),
+                    rule,
+                    cal,
+                    )
+
+        recurring_partly1.save()
+        recurring_partly2 = self.__create_recurring_event(
+                    "tastasta",
+                    datetime.datetime(2012, 12, 24, 11, 0, tzinfo=timezone.UTC),
+                    datetime.datetime(2012, 12, 24, 13, 0, tzinfo=timezone.UTC),
+                    rule,
+                    cal,
+                    )
+
+        recurring_partly2.save()
+
+        occurrence_generator = TestSubEvent.objects.all().occur_within(
+            datetime.datetime(2012, 12, 30, 13, 0, tzinfo=timezone.UTC),
+            datetime.datetime(2013, 1, 10, 0, 0, tzinfo=timezone.UTC)
+            )
+        all_events = list(occurrence_generator)
+        for ev in all_events:
+            print(ev.title, ev.start, ev.rule)
+        self.assertEqual(len(all_events), 3)

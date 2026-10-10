@@ -12,6 +12,16 @@ freqs = (("YEARLY", "Yearly"),
     ("MINUTELY", "Minutely"),
     ("SECONDLY", "Secondly"))
 
+weekdays ={
+    "MO":0,
+    "TU":1,
+    "WE":2,
+    "TH":3,
+    "FR":4,
+    "SA":5,
+    "SU":6
+}
+
 class Rule(*get_model_bases(), metaclass=models.base.ModelBase):
     name=models.CharField(max_length=32)
     description = models.TextField()
@@ -27,7 +37,8 @@ class Rule(*get_model_bases(), metaclass=models.base.ModelBase):
             'WEEKLY': rrule.WEEKLY,
             'DAILY': rrule.DAILY,
             'HOURLY': rrule.HOURLY,
-
+            'MINUTELY': rrule.MINUTELY,
+            'SECONDLY': rrule.SECONDLY,
         }
         return compatibility_dict[self.frequency]
 

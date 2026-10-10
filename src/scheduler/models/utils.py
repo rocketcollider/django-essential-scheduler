@@ -67,8 +67,9 @@ class NextOccurrenceReplacer(object):
             return [self.lookup.pop()[1]]
 
         ret = []
-        while self.lookup and self.lookup[-1][1].start <= occ.original_start:
+        while self.lookup and self.lookup[-1][1].start < occ.original_start:
             ret.append(self.lookup.pop()[1])
+        ret.append(occ)
         return ret
 
     def is_next_occurrence(self, occ):
